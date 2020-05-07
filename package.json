@@ -1,0 +1,17 @@
+{
+  "name": "js-mdg",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "author": "Samick <boneache@gmail.com>",
+  "repository": "samick17/js-mdg",
+  "keywords": [
+  	"JavaScript",
+  	"Markdown",
+  	"Document"
+  ],
+  "license": "MIT"
+}
