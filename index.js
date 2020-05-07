@@ -231,16 +231,10 @@ async function genDoc(srcFilePath, destFilePath) {
 	});
 }
 
-function getFilePath(filePath) {
-	return path.resolve(__dirname, filePath);
-}
-
 function genDocs(docDefs) {
 	for(let i in docDefs) {
 		let docDef = docDefs[i];
-		const srcFilePath = getFilePath(docDef.src);
-		const destFilePath = getFilePath(docDef.dest);
-		genDoc(srcFilePath, destFilePath);
+		genDoc(docDef.src, docDef.dest);
 	}
 }
 
