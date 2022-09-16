@@ -9,12 +9,14 @@ const Symbols = {
 	Caregory: 'category',
 	Param: 'param',
 	Params: 'params',
+	Return: 'return',
 	Returns: 'returns',
 	Example: 'example',
 };
 
 const Categories = {
 	StaticFn: 'static function',
+	StaticProps: 'static property',
 	MemberFn: 'function',
 };
 
@@ -63,6 +65,7 @@ function dumpFileComment(filePath) {
 				[Symbols.Name]: '',
 				[Symbols.Description]: '',
 				[Symbols.Params]: [],
+				[Symbols.Return]: '',
 				[Symbols.Returns]: ''
 			};
 		} else if(line.match(/\*\//)) {
@@ -88,6 +91,7 @@ function dumpFileComment(filePath) {
 					case Symbols.Param:
 					data.params.push(parseItem(value));
 					break;
+					case Symbols.Return:
 					case Symbols.Returns:
 					data.return = parseItem(value);
 					break;
@@ -135,7 +139,7 @@ async function genDoc(srcFilePath, destFilePath) {
 	};
 	/* Static Functions */
 	const writeStaticFunctionsOutline = items => {
-		writeLine('## **Methods**');
+		writeLine('## **Static Methods**');
 		printLine();
 		const writeItem = item => {
 			writeLine(`| [${item.name}](#${item.name.toLowerCase()}) | ${item.desc||''} |`);
@@ -149,7 +153,7 @@ async function genDoc(srcFilePath, destFilePath) {
 	};
 	const writeStaticFunctionsItems = items => {
 		const writeItem = item => {
-			writeLine(`### **${item.name}**`);
+			writeLine(`### Static Method - **${item.name}**`);
 			printLine();
 			writeLine(`| Parameters | Type | Description |`);
 			writeLine(`|------------|------|-------------|`);
@@ -158,12 +162,13 @@ async function genDoc(srcFilePath, destFilePath) {
 				writeLine(`| ${arg.name} | ${arg.type} | ${arg.desc} |`);
 			}
 			printLine();
-			writeLine(`| Return |`);
-			writeLine(`|--------|`);
+			writeLine(`### ${item.name}`);
+			writeLine('| Type | Description |');
+			writeLine(`|--------|----|`);
 			if(item.return.type) {
-				writeLine(`| **${item.return.type}** ${item.return.desc} |`);
+				writeLine(`| **${item.return.type || 'undefined'}** | ${item.return.desc || 'Nothing return'} |`);
 			} else {
-				writeLine(`| ${item.return.desc} |`);
+				writeLine(`| **undefined** | ${item.return.dess || 'Nothing return'} |`);
 			}
 			printLine();
 			if(item.example) {
@@ -212,10 +217,10 @@ async function genDoc(srcFilePath, destFilePath) {
 		.onItem((item) => {
 			// if(item.category)
 			switch(item.category) {
-				case 'static function':
+				case Categories.StaticFn:
 				staticFnItems.push(item);
 				break;
-				case 'static property':
+				case Categories.StaticProps:
 				staticProperties.push(item);
 				break;
 				default:
