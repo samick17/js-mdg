@@ -4,6 +4,7 @@ const path = require('path');
 const readline = require('readline');
 
 const Symbols = {
+	Class: 'class',
 	Name: 'name',
 	Description: 'description',
 	Caregory: 'category',
@@ -50,10 +51,11 @@ function dumpFileComment(filePath) {
 	};
 	let onItemCallback = () => {};
 	let onEndCallback = () => {};
+	let className = '';
 	readline
 	.createInterface({
 		input: fs.createReadStream(filePath),
-		output: process.stdout,
+		// output: process.stdout,
 		console: false
 	})
 	.on('line', (line) => {
@@ -62,6 +64,7 @@ function dumpFileComment(filePath) {
 		} else if(line.match(/\/\*/)) {
 			isStart = true;
 			data = {
+				[Symbols.Class]: '',
 				[Symbols.Name]: '',
 				[Symbols.Description]: '',
 				[Symbols.Params]: [],
@@ -79,8 +82,13 @@ function dumpFileComment(filePath) {
 				const name = reResult[1];
 				const value = reResult[2];
 				switch(name.toLowerCase()) {
+					case Symbols.Class:
+					break;
 					case Symbols.Caregory:
 					data.category = value;
+					if(value === Categories.MemberFn) {
+						data[Symbols.Class] = className;
+					}
 					break;
 					case Symbols.Name:
 					data.name = value;
@@ -106,6 +114,9 @@ function dumpFileComment(filePath) {
 					data.example += line.replace(' * ', '') + os.EOL;
 				}
 			}
+		} else if(line.match(/class\s(.*?)\s.*/)) {
+			let reResult = /class\s(.*?)\s.*/.exec(line);
+			className = reResult[1];
 		}
 	})
 	.on('close', () => {
@@ -138,8 +149,8 @@ async function genDoc(srcFilePath, destFilePath) {
 		printLine();
 	};
 	/* Static Functions */
-	const writeStaticFunctionsOutline = items => {
-		writeLine('## **Static Methods**');
+	const writeFunctionsOutline = name => items => {
+		writeLine(`## **${name} Methods**`);
 		printLine();
 		const writeItem = item => {
 			writeLine(`| [${item.name}](#${item.name.toLowerCase()}) | ${item.desc||''} |`);
@@ -151,7 +162,7 @@ async function genDoc(srcFilePath, destFilePath) {
 		}
 		printLine();
 	};
-	const writeStaticFunctionsItems = items => {
+	const writeFunctionsItems = name => items => {
 		const writeItem = item => {
 			writeLine(`### Static Method - **${item.name}**`);
 			printLine();
@@ -172,7 +183,7 @@ async function genDoc(srcFilePath, destFilePath) {
 			}
 			printLine();
 			if(item.example) {
-				writeLine('```js');
+				writeLine('```javascript');
 				// printLine();
 				write(item.example);
 				// printLine();
@@ -186,8 +197,19 @@ async function genDoc(srcFilePath, destFilePath) {
 		}
 	};
 	const writeStaticFunctions = (items) => {
-		writeStaticFunctionsOutline(items);
-		writeStaticFunctionsItems(items);
+		writeFunctionsOutline('Static')(items);
+		writeFunctionsItems('Static')(items);
+	};
+	const writeClassOutline = (item) => {
+		writeLine(`### Class - **${item.class}**`);
+		printLine();
+	};
+	const writeMemberFunctions = (items) => {
+		if(items.length > 0) {
+			writeClassOutline(items[0]);
+			writeFunctionsOutline('Class')(items);
+			writeFunctionsItems('Class')(items);
+		}
 	};
 	/* End of Static Functions */
 	/* Static Properties */
@@ -210,6 +232,7 @@ async function genDoc(srcFilePath, destFilePath) {
 	/* End of Static Properties */
 	const staticFnItems = [];
 	const staticProperties = [];
+	const memberFnItems = [];
 	return new Promise((resolve) => {
 		writeLine(`# **[${fileName}](../README.md)**`);
 		printLine();
@@ -223,6 +246,9 @@ async function genDoc(srcFilePath, destFilePath) {
 				case Categories.StaticProps:
 				staticProperties.push(item);
 				break;
+				case Categories.MemberFn:
+				memberFnItems.push(item);
+				break;
 				default:
 				break;
 			}
@@ -230,6 +256,7 @@ async function genDoc(srcFilePath, destFilePath) {
 		.onEnd(() => {
 			writeStaticProperties(staticProperties);
 			writeStaticFunctions(staticFnItems);
+			writeMemberFunctions(memberFnItems);
 			ws.end();
 			resolve();
 		});
